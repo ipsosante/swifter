@@ -121,16 +121,16 @@ open class HttpRouter {
     private func findHandler(_ node: inout Node, params: inout [String: String], pattern: [String], matchedNodes: inout [Node], index: Int, count: Int) {
 
         if index < count, let pathToken = pattern[index].removingPercentEncoding {
-
             var currentIndex = index + 1
+
+            if var node = node.nodes[pathToken] {
+                findHandler(&node, params: &params, pattern: pattern, matchedNodes: &matchedNodes, index: currentIndex, count: count)
+            }
+
             let variableNodes = node.nodes.filter { $0.0.first == ":" }
             if let variableNode = variableNodes.first {
                 params[variableNode.0] = pathToken
                 findHandler(&node.nodes[variableNode.0]!, params: &params, pattern: pattern, matchedNodes: &matchedNodes, index: currentIndex, count: count)
-            }
-
-            if var node = node.nodes[pathToken] {
-                findHandler(&node, params: &params, pattern: pattern, matchedNodes: &matchedNodes, index: currentIndex, count: count)
             }
 
             if var node = node.nodes["*"] {
