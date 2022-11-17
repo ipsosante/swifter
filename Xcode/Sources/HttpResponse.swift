@@ -80,7 +80,9 @@ public enum HttpResponseBody {
 public enum HttpResponse {
 
     case switchProtocols([String: String], (Socket) -> Void)
-    case ok(HttpResponseBody, [String: String] = [:]), created, accepted
+    case ok(HttpResponseBody, [String: String] = [:])
+    case created(HttpResponseBody? = nil)
+    case accepted
     case movedPermanently(String)
     case movedTemporarily(String)
     case badRequest(HttpResponseBody?), unauthorized(HttpResponseBody?), forbidden(HttpResponseBody?), notFound(HttpResponseBody? = nil), notAcceptable(HttpResponseBody?), tooManyRequests(HttpResponseBody?), internalServerError(HttpResponseBody?)
@@ -160,7 +162,7 @@ public enum HttpResponse {
     func content() -> (length: Int, write: ((HttpResponseBodyWriter) throws -> Void)?) {
         switch self {
         case .ok(let body, _)          : return body.content()
-        case .badRequest(let body), .unauthorized(let body), .forbidden(let body), .notFound(let body), .tooManyRequests(let body), .internalServerError(let body) : return body?.content() ?? (-1, nil)
+        case .badRequest(let body), .unauthorized(let body), .forbidden(let body), .notFound(let body), .tooManyRequests(let body), .internalServerError(let body), .created(let body) : return body?.content() ?? (-1, nil)
         case .raw(_, _, _, let writer) : return (-1, writer)
         default                        : return (-1, nil)
         }
