@@ -128,6 +128,21 @@ public enum HttpResponse {
 
     public func headers() -> [String: String] {
         var headers = ["Server": "Swifter \(HttpServer.VERSION)"]
+
+        func updateHeaders(_ headers: inout [String: String], with body: HttpResponseBody?) {
+            guard let body = body else {
+                return
+            }
+
+            switch body {
+            case .json: headers["Content-Type"] = "application/json"
+            case .html, .htmlBody: headers["Content-Type"] = "text/html"
+            case .text: headers["Content-Type"] = "text/plain"
+            case .data(_, let contentType): headers["Content-Type"] = contentType
+            default:break
+            }
+        }
+
         switch self {
         case .switchProtocols(let switchHeaders, _):
             for (key, value) in switchHeaders {
@@ -137,17 +152,13 @@ public enum HttpResponse {
             for (key, value) in customHeaders {
                 headers.updateValue(value, forKey: key)
             }
-            switch body {
-            case .json: headers["Content-Type"] = "application/json"
-            case .html, .htmlBody: headers["Content-Type"] = "text/html"
-            case .text: headers["Content-Type"] = "text/plain"
-            case .data(_, let contentType): headers["Content-Type"] = contentType
-            default:break
-            }
+            updateHeaders(&headers, with: body)
         case .movedPermanently(let location):
             headers["Location"] = location
         case .movedTemporarily(let location):
             headers["Location"] = location
+        case .badRequest(let body), .unauthorized(let body), .forbidden(let body), .notFound(let body), .tooManyRequests(let body), .internalServerError(let body), .created(let body):
+            updateHeaders(&headers, with: body)
         case .raw(_, _, let rawHeaders, _):
             if let rawHeaders = rawHeaders {
                 for (key, value) in rawHeaders {
